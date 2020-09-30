@@ -15,12 +15,17 @@ library(readxl)
 
 ## Problem 1
 
+First define a path to dataset
+```{r}
+path_to_data = './data/Trash-Wheel-Collection-Totals-8-6-19.xlsx'
+```
+
 Read the Mr. Trashwheel dataset.
 
 ```{r}
 trashwheel_df = 
   read_xlsx(
-    './data/Trash-Wheel-Collection-Totals-8-6-19.xlsx',
+    path = path_to_data,
     range = cell_cols('A:N')) %>% 
   janitor::clean_names() %>% 
   drop_na(dumpster) %>% 
@@ -81,6 +86,10 @@ left_join(precip_df, month_df, by = 'month')
 
 
 This dataset contains information from the Mr. Trashwheel trash collector in Baltimore, Maryland. As trash enters the inner harbor, the trashwheel collects that trash, and stores it in a dumpster. The dataset contains information on year, month, and trash collected, including some specific kinds of trash. There are a total of `r nrow(trashwheel_df)` rows in our final dataset. Additional data sheets include month precipitation data.
+
+The median number of sports balls found in a dumpster in 2017 was `r trashwheel_df %>% filter(year == 2017) %>% pull(sports_balls) %>% median()`
+
+* The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
 
 
 
