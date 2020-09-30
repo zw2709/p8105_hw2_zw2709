@@ -17,7 +17,7 @@ library(readxl)
 
 First define a path to dataset
 ```{r}
-path_to_data = './data/Trash-Wheel-Collection-Totals-8-6-19.xlsx'
+path_to_data1 = './data/Trash-Wheel-Collection-Totals-8-6-19.xlsx'
 ```
 
 Read the Mr. Trashwheel dataset.
@@ -25,7 +25,7 @@ Read the Mr. Trashwheel dataset.
 ```{r}
 trashwheel_df = 
   read_xlsx(
-    path = path_to_data,
+    path = path_to_data1,
     range = cell_cols('A:N')) %>% 
   janitor::clean_names() %>% 
   drop_na(dumpster) %>% 
@@ -89,7 +89,139 @@ This dataset contains information from the Mr. Trashwheel trash collector in Bal
 
 The median number of sports balls found in a dumpster in 2017 was `r trashwheel_df %>% filter(year == 2017) %>% pull(sports_balls) %>% median()`
 
-* The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
+The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
+
+
+
+
+
+
+## Problem 2
+
+
+Read the csv file and retain some columns.
+
+```{r}
+NYC_data = read_csv('./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv')
+janitor::clean_names(NYC_data)
+
+NYC_data_df = 
+  select(NYC_data, Line:Entry, Vending, ADA)
+```
+
+
+
+Convert the entry variable from character to logical variable.
+```{r}
+NYC_df =
+  mutate(
+    NYC_data_df, Entry = recode(Entry, 'YES' = 'TRUE', 'NO' = 'FALSE'),
+    Entry = as.logical(Entry)
+  ) %>% 
+  janitor::clean_names()
+
+
+```
+
+
+This dataset contains information about each subway station in NYC, including the these variables: station name, station longitute, station latitude, the routes served, the entry, entrance type, line information and ADA compliance. 
+
+So far, all the variables mentioned above are selected from the csv file 'NYC_Transit_Subway_Entrance_And_Exit_Data.csv' and we have changed the entry variable type from character(YES/NO) to logical variable(True/False).
+
+The resulting dataset has `r nrow(NYC_df)` rows and `r ncol(NYC_df)` columns in total, and the dimension is `r nrow(NYC_df)` * `r ncol(NYC_df)`.
+
+
+
+
+
+ANswer questions
+
+* How many distinct stations? 
+Since the stations are identified by both name and line, so use distinct function
+```{r}
+dist_sta = distinct(NYC_df, line, station_name, keep_all = TRUE)
+```
+SO there are `r nrow(dist_sta)` distinct stations.
+
+
+
+
+```{r}
+dist_ada = 
+  filter(NYC_df, ada == TRUE) %>% 
+  distinct(station_name, line)
+  
+```
+Among these distinct stations, there are `r nrow(dist_ada)` stations with ADA compliance.
+
+
+
+```{r}
+NYC_df_new=
+
+  mutate(
+    NYC_data_df, Vending = recode(Vending, 'YES' = 'TRUE', 'NO' = 'FALSE'),
+    Vending = as.logical(Vending)
+  ) %>% 
+  janitor::clean_names()
+
+
+
+dist_ved = 
+  filter(NYC_df_new, vending == FALSE) 
+
+
+```
+Among these distinct stations, there are `r nrow(dist_ved)` stations without vending allow entrance, so the proportion is 183/465=39%
+
+
+
+
+Then we need to reformat data.
+```{r}
+reformat = 
+  NYC_df_new %>% 
+  mutate(route8 = as.character(route8), route9 = as.character(route9), route10 = as.character(route10), route11 = as.character(route11)) %>% 
+  drop_na(route1:route11) %>% 
+  pivot_longer(
+    route1:route11,
+    names_to = 'route_name',
+    values_to = 'route_number'
+  )
+```
+
+How many distinct stations serve the A train?
+```{r}
+A_train = 
+  filter(reformat, route_number == 'A') %>% 
+  distinct(station_name, line)
+```
+There are `r nrow(A_train)` distinct stations serve the A train.
+
+
+```{r}
+A_train_ada = 
+  filter(reformat, route_number == 'A') %>% 
+  filter(ada == TRUE) %>% 
+  distinct(station_name, line)
+ 
+
+```
+Among that serving A stations, `r nrow(A_train_ada)` are ADA compliant.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
