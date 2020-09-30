@@ -130,6 +130,7 @@ So far, all the variables mentioned above are selected from the csv file 'NYC_Tr
 
 The resulting dataset has `r nrow(NYC_df)` rows and `r ncol(NYC_df)` columns in total, and the dimension is `r nrow(NYC_df)` * `r ncol(NYC_df)`.
 
+Overall the data is relatively tidy, but some terms with NA seems to be handled later.
 
 
 
@@ -208,6 +209,133 @@ A_train_ada =
 
 ```
 Among that serving A stations, `r nrow(A_train_ada)` are ADA compliant.
+
+
+
+
+
+
+
+## Problem 3
+
+First, clean the data in pols-month.csv
+
+```{r}
+pol = 
+  read_csv('./data/pols-month.csv') %>% 
+  janitor:: clean_names() %>% 
+  separate(mon, into = c('year', 'month', 'day')) %>%      #break up the mon variable
+  mutate(month, month = as.integer(month))
+
+```
+
+
+
+
+Replace month name with month number
+
+```{r}
+
+month_df = 
+  tibble(
+    month = 1:12,
+    month_name = month.name
+  )
+
+pol_d = 
+  left_join(pol, month_df, by = 'month') %>% 
+  select(-month) %>% 
+  relocate(year, month_name)
+
+```
+
+
+
+Create the president variable, remove day variable
+
+```{r}
+pol_df =
+  mutate(pol_d, president = gov_gop + sen_gop + rep_gop + gov_dem + sen_dem + rep_dem) %>% 
+  select(-day)
+   
+```
+
+
+
+
+Second, clean the data in snp.csv
+```{r}
+snp = 
+  read_csv('./data/snp.csv') %>% 
+  janitor:: clean_names() %>% 
+  separate(date, into = c('month', 'day', 'year')) %>% 
+  
+  mutate(month, month = as.integer(month)) 
+  
+```
+Replace month name with month number
+```{r}
+month_df = 
+  tibble(
+    month = 1:12,
+    month_name = month.name
+  )
+
+snp_df = 
+  left_join(snp, month_df, by = 'month') %>% 
+  arrange(year, month) %>% 
+  select(-month) %>% 
+  select(-day) %>% 
+  relocate(year, month_name)
+```
+
+
+
+Third, tidy the unemployment data
+
+```{r}
+une_df = 
+  read_csv('./data/unemployment.csv') %>% 
+  janitor:: clean_names() %>% 
+  
+  pivot_longer(
+    jan:dec,
+    names_to = 'month_name',
+    values_to = 'unemployment'
+  ) %>% 
+  
+  mutate(year, year = as.character(year))
+
+```
+
+
+THEN merge into one data frame
+```{r}
+res = left_join(pol_df, snp_df, by = c('month_name', 'year'))
+result = left_join(res, une_df, by = c('month_name', 'year'))
+
+
+```
+
+There are three datasets in total: pols, snp, unemployment with corresponding data frame called pol_df, snp_df and une_df.
+
+
+The pols dataset contains 822 observations of the date information and other 8 variables related to the number of national politicians who are democratic or republican at any given time, with one more created variable called 'president'.
+
+The snp dataset contains 787 observations of the date information and the closing value of Standard & Poor’s stock market index (S&P) on the associated date.
+
+The unemployment dataset contains 68 observations about percentage of unemployment and the month associated.
+
+
+Since these three datasets have elements of years and months in common, with data wrangling process, they could be merged into one dataframe called 'result'.
+
+The result dataset has `r nrow(result)` rows and `r ncol(result)` columns, and the dimension is `r nrow(result)` * `r ncol(result)`.
+
+The range of the years is :`r range(pull(result, year))`.
+
+The name of the key variables are: `r names(result)`.
+
+
 
 
 
